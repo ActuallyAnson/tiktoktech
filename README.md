@@ -73,7 +73,7 @@ cd tiktoktech
 ```bash
 python -m venv venv #(or python3 -m venv venv)
 source .venv/bin/activate #linux & Macos 
-# On Windows: .venv\Scripts\activate
+# On Windows: venv\Scripts\activate
 ```
 
 3. Install dependencies:
