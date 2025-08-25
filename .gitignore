@@ -1,4 +1,14 @@
+# Python
 __pycache__/
-.env
-outputs/
+*.pyc
+*.pyo
+*.pyd
+env/
+venv/
 
+# IDEs
+.vscode/
+.idea/
+
+# macos
+.DS_Store
