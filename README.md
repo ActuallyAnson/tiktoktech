@@ -55,12 +55,10 @@ tiktoktech/
 ## Development Tools & Technologies
 
 - **Language**: Python 3.13+
-- **LLM Framework**: LangChain + OpenAI GPT-4
 - **Web Interface**: Streamlit
 - **Data Processing**: Pandas, NumPy
 - **Visualization**: Plotly, Matplotlib, Seaborn
-- **Testing**: pytest
-- **Environment Management**: python-dotenv
+
 
 ## Installation & Setup
 
@@ -88,41 +86,14 @@ cp .env.example .env
 # Edit .env with your OpenAI API key and other configurations
 ```
 
-5. Run the application:
-```bash
-streamlit run src/main.py
-```
 
 ## Usage
 
-### Command Line Interface
-```bash
-python src/main.py --input data/sample_features.csv --output outputs/compliance_report.csv
-```
 
-### Web Interface
-Access the Streamlit interface at `http://localhost:8501` for interactive feature analysis.
-
-### API Usage
-```python
-from src.processors.compliance_detector import ComplianceDetector
-
-detector = ComplianceDetector()
-result = detector.analyze_feature(
-    name="Curfew login blocker with ASL and GH for Utah minors",
-    description="To comply with the Utah Social Media Regulation Act..."
-)
-```
 
 ## Expected Outputs
 
-For each analyzed feature, the system provides:
 
-- **Compliance Flag**: ✅ Requires geo-compliance, ❌ No geo-compliance needed, ❓ Needs human review
-- **Reasoning**: Clear explanation of the decision
-- **Related Regulations**: Specific laws/regulations identified
-- **Confidence Score**: ML confidence in the prediction
-- **Audit Trail**: Complete decision pathway for transparency
 
 ## Internal Terminology Support
 
