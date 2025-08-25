@@ -55,6 +55,7 @@ tiktoktech/
 ## Development Tools & Technologies
 
 - **Language**: Python 3.13+
+- **LLM Framework**: Google Gemini 2.5 Flash
 - **Web Interface**: Streamlit
 - **Data Processing**: Pandas, NumPy
 - **Visualization**: Plotly, Matplotlib, Seaborn
@@ -70,7 +71,7 @@ cd tiktoktech
 
 2. Create and activate virtual environment:
 ```bash
-python -m venv .venv #(or python3 -m venv venv)
+python -m venv venv #(or python3 -m venv venv)
 source .venv/bin/activate #linux & Macos 
 # On Windows: .venv\Scripts\activate
 ```
@@ -83,7 +84,7 @@ pip install -r requirements.txt
 4. Set up environment variables:
 ```bash
 cp .env.example .env
-# Edit .env with your OpenAI API key and other configurations
+# Edit .env with your Gemini API key and other configurations
 ```
 
 
