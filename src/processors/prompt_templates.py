@@ -20,9 +20,16 @@ NOT REQUIRED: Universal features or business-only geo-targeting
 NEEDS HUMAN REVIEW: Ambiguous cases where intent is unclear
 
 Key indicators for REQUIRED:
-- Explicit law names (Utah Social Media Regulation Act, California SB976, EU DSA)
+- Explicit law names:
+  * EU Digital Service Act (DSA)
+  * California's "Protecting Our Kids from Social Media Addiction Act"
+  * Florida's "Online Protections for Minors"
+  * Utah Social Media Regulation Act
+  * US NCMEC reporting requirements for child safety content
 - Compliance language ("To comply with", "In line with federal law")
 - Region-specific legal requirements
+- Age-related restrictions for minors
+- Content moderation for child safety
 
 Key indicators for NOT REQUIRED:
 - Universal features ("all regions", "platform-wide")
@@ -36,17 +43,45 @@ Example 1:
 Feature: "Curfew login blocker with Age-sensitive logic and Geo-handler for Utah minors"
 Description: "To comply with the Utah Social Media Regulation Act, we are implementing a curfew-based login restriction for users under 18..."
 Classification: REQUIRED
-Reasoning: Explicitly mentions compliance with Utah Social Media Regulation Act, specific regional law
+Reasoning: Explicitly mentions compliance with Utah Social Media Regulation Act, specific regional law for minor protection
 Confidence: 0.95
 
 Example 2:
+Feature: "California social media addiction warning system"
+Description: "Implementing addiction warning notifications for California users under Protecting Our Kids from Social Media Addiction Act"
+Classification: REQUIRED
+Reasoning: Explicitly references California's Protecting Our Kids from Social Media Addiction Act, state-specific compliance requirement
+Confidence: 0.95
+
+Example 3:
+Feature: "Florida minor content filtering"
+Description: "Age verification and content filtering system for Florida users to comply with Online Protections for Minors law"
+Classification: REQUIRED
+Reasoning: Specifically mentions Florida's Online Protections for Minors law, state-specific minor protection requirement
+Confidence: 0.95
+
+Example 4:
+Feature: "EU DSA content moderation reporting"
+Description: "Automated reporting system for content moderation decisions to comply with EU Digital Service Act requirements"
+Classification: REQUIRED
+Reasoning: Explicitly mentions EU Digital Service Act (DSA) compliance, region-specific legal requirement
+Confidence: 0.95
+
+Example 5:
+Feature: "NCMEC automated reporting system"
+Description: "System to automatically report suspected child sexual abuse content to NCMEC as required by US law"
+Classification: REQUIRED
+Reasoning: Mentions NCMEC reporting requirements, specific US legal obligation for child safety
+Confidence: 0.95
+
+Example 6:
 Feature: "Universal Personalized feed deactivation on guest mode"
 Description: "By default, Personalized feed will be turned off for all users browsing in guest mode."
 Classification: NOT REQUIRED
 Reasoning: Universal feature with no legal requirements, business decision
 Confidence: 0.9
 
-Example 3:
+Example 7:
 Feature: "Trial run of video replies in EU"
 Description: "Roll out video reply functionality to users in EEA only. Geo-handler will manage exposure control, and Baseline Behavior is used to baseline feedback."
 Classification: NOT REQUIRED
