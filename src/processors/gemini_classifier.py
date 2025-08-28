@@ -4,9 +4,11 @@ Gemini classifier for geo-compliance detection.
 
 import os
 import json
-import google.generativeai as genai
-from dotenv import load_dotenv
 from typing import Dict, Any, Optional
+from dotenv import load_dotenv
+import google.generativeai as genai
+from google.generativeai.generative_models import GenerativeModel
+from google.generativeai.client import configure
 from .prompt_templates import build_classification_prompt
 from .text_preprocessor import expand_terminology
 
@@ -22,10 +24,13 @@ class GeminiClassifier:
             raise ValueError("GEMINI_API_KEY not found in environment variables. Please check your .env file.")
         
         # Configure Gemini
-        genai.configure(api_key=my_api_key)
-        
-        # Store the model for later use
-        self.model = genai.GenerativeModel("gemini-2.5-flash")
+        try:
+            configure(api_key=my_api_key)
+            
+            # Store the model for later use
+            self.model = GenerativeModel("gemini-1.5-flash")
+        except Exception as e:
+            raise ValueError(f"Failed to configure Gemini API: {str(e)}. Check your API key and library version.")
 
     #expand terminology, build prompt, send to gemini, parse response from gemini to dict
     def classify_feature(self, feature_name:str, feature_description:str) -> Dict[str, Any]:

@@ -3,6 +3,7 @@ Batch processor for classifying multiple features at once.
 For Data Engineers processing large datasets.
 """
 
+import os
 import pandas as pd
 import json
 import time
@@ -38,11 +39,12 @@ class BatchClassifier:
             raise ValueError(f"Missing required columns: {missing_cols}")
         
         print(f"🔍 Processing {len(df)} features...")
+        start_time = time.time()
         
         # Process each feature
         results = []
-        for i, row in df.iterrows():
-            print(f"  [{i+1}/{len(df)}] Processing: {row['feature_name']}")
+        for i, row in df.iterrows():            
+            print(f"  [{len(results)+1}/{len(df)}] Processing: {str(row['feature_name'])[:50]}...")
             
             try:
                 result = self.classifier.classify_feature(
@@ -60,7 +62,7 @@ class BatchClassifier:
                 results.append(result)
                 
                 # Rate limiting
-                if i < len(df) - 1:  # Don't delay after last item
+                if len(results) < len(df):  # Don't delay after last item
                     time.sleep(self.delay)
                     
             except Exception as e:
@@ -154,26 +156,39 @@ class BatchClassifier:
         return summary
 
 def main():
-    """Example usage of batch classifier."""
+    """Example usage of batch classifier with real TikTok sample data."""
     
-    # Create sample data for testing
-    sample_features = [
-        {"name": "ASL for EU", "description": "Age-sensitive logic for GDPR compliance"},
-        {"name": "Bug fix", "description": "Fixed memory leak in video processing"},
-        {"name": "Age verification", "description": "Enhanced age verification system"},
-    ]
+    # Use the real sample data that contains TikTok terminology and complex features
+    batch_classifier = BatchClassifier(delay_seconds=0.1)  # Much faster: 0.1 seconds instead of 0.5
     
-    # Save sample data to CSV
-    sample_df = pd.DataFrame([
-        {"feature_name": f["name"], "feature_description": f["description"]} 
-        for f in sample_features
-    ])
-    sample_df.to_csv('sample_features.csv', index=False)
-    print("Created sample_features.csv")
+    # Ensure outputs directory exists
+    os.makedirs('outputs', exist_ok=True)
     
-    # Process the CSV
-    batch_classifier = BatchClassifier(delay_seconds=0.5)
-    results_df = batch_classifier.process_csv('sample_features.csv', 'sample_results.csv')
+    # Check if the real sample data exists
+    sample_data_path = 'data/sample_features.csv'
+    if Path(sample_data_path).exists():
+        print(f"🎯 Processing real TikTok sample data from {sample_data_path}")
+        results_df = batch_classifier.process_csv(sample_data_path, 'outputs/sample_results.csv')
+    else:
+        print(f"⚠️  Real sample data not found at {sample_data_path}")
+        print("📝 Creating simple test data for demo purposes...")
+        
+        # Fallback: Create simple sample data for testing
+        sample_features = [
+            {"name": "ASL for EU", "description": "Age-sensitive logic for GDPR compliance"},
+            {"name": "Bug fix", "description": "Fixed memory leak in video processing"},
+            {"name": "Age verification", "description": "Enhanced age verification system"},
+        ]
+        
+        # Save sample data to CSV
+        sample_df = pd.DataFrame([
+            {"feature_name": f["name"], "feature_description": f["description"]} 
+            for f in sample_features
+        ])
+        sample_df.to_csv('sample_features.csv', index=False)
+        print("📁 Created sample_features.csv")
+        
+        results_df = batch_classifier.process_csv('sample_features.csv', 'outputs/sample_results.csv')
     
     # Generate summary report
     summary = batch_classifier.generate_summary_report(results_df)
@@ -186,9 +201,9 @@ def main():
     print(f"Needs human review: {summary['needs_human_review_count']}")
     
     # Save summary as JSON
-    with open('batch_summary.json', 'w') as f:
+    with open('outputs/batch_summary.json', 'w') as f:
         json.dump(summary, f, indent=2, default=str)
-    print("Summary saved to batch_summary.json")
+    print("Summary saved to outputs/batch_summary.json")
 
 if __name__ == "__main__":
     main()
