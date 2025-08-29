@@ -2,6 +2,7 @@
 echo Starting the Geo-Compliance Classifier Streamlit app...
 
 :: Activate the virtual environment
+:: Change the path to your own venv path example: venvloc\Scripts\activate.bat
 call tiktokvenv\Scripts\activate.bat
 
 :: Run Streamlit in the background
