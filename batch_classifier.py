@@ -254,6 +254,10 @@ class BatchClassifier:
         provider = os.environ['SEPOLIA_API_PROVIDER'].lower()
         private_key = os.environ['ETH_PRIVATE_KEY'] 
 
+        if api_key == 'your_sepolia_api_key_here' or private_key == 'your_ethereum_private_key_here':
+            api_key = ''
+            private_key = ''
+
         if (api_key and provider and private_key):
             match provider:
                 case 'alchemy':
@@ -307,7 +311,6 @@ class BatchClassifier:
             except Exception as e:
                 print(f"❌ Hash log transaction failed: {e}")
                 return ''
-            
         else:
             print("🔒 Hash log transaction skipped (Missing required environment variables)")
             return ''
@@ -394,7 +397,10 @@ def main():
     # Use batch processing for maximum efficiency!
     # With 5 features per batch, we reduce API calls from 30 to 6
     batch_classifier = BatchClassifier(delay_seconds=5.0)  # 5 seconds between batches for rate limits
-    
+
+    batch_classifier.log_on_chain('')  # Test logging function (will skip if env vars missing)
+    return
+
     # Check if the real sample data exists
     sample_data_path = 'data/sample_features.csv'
     if Path(sample_data_path).exists():
