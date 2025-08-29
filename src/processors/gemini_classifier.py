@@ -38,7 +38,7 @@ class GeminiClassifier:
             expanded_name = expand_terminology(feature_name)
             expanded_desc = expand_terminology(feature_description)
 
-            prompt = build_classification_prompt (expanded_name,expanded_desc)
+            prompt = build_classification_prompt (expanded_name, expanded_desc)
 
             response = self.model.generate_content(prompt)
 
@@ -46,7 +46,7 @@ class GeminiClassifier:
             parsed_result = self._parse_json_response(response.text)
             
             # Add some metadata
-            parsed_result["original_feature_name"] = feature_name
+            parsed_result["input_feature_name"] = feature_name
             parsed_result["expanded_feature_name"] = expanded_name
             
             return parsed_result
@@ -74,8 +74,9 @@ class GeminiClassifier:
                 batch_data.append({
                     'index': i,
                     'feature_name': feature['feature_name'],
+                    'feature_description': feature['feature_description'],
                     'expanded_name': expanded_name,
-                    'expanded_desc': expanded_desc
+                    'expanded_description': expanded_desc
                 })
             
             # Build batch prompt
@@ -86,7 +87,7 @@ class GeminiClassifier:
             
             # Parse batch response
             batch_results = self._parse_batch_response(response.text, batch_data)
-            
+
             return batch_results
             
         except Exception as e:
@@ -123,7 +124,7 @@ Features to analyze:
             prompt += f"""
 Feature {item['index']}:
 Name: {item['expanded_name']}
-Description: {item['expanded_desc']}
+Description: {item['expanded_description']}
 
 """
         
@@ -168,11 +169,13 @@ Return ONLY the JSON array with classifications for all features. No additional 
                 if feature_result:
                     final_results.append({
                         'classification': feature_result.get('classification', 'NEEDS HUMAN REVIEW'),
-                        'reasoning': feature_result.get('reasoning', 'No reasoning provided'),
-                        'confidence': feature_result.get('confidence', 0.5),
+                        'reasoning': feature_result.get('reasoning', ''),
+                        'confidence': feature_result.get('confidence', 0.0),
                         'related_regulations': feature_result.get('related_regulations', []),
-                        'original_feature_name': item['feature_name'],
-                        'expanded_feature_name': item['expanded_name']
+                        'input_feature_name': item['feature_name'],
+                        'input_feature_description': item['feature_description'],
+                        'expanded_feature_name': item['expanded_name'],
+                        'expanded_feature_description': item['expanded_description']
                     })
                 else:
                     # Fallback if result not found
@@ -181,8 +184,10 @@ Return ONLY the JSON array with classifications for all features. No additional 
                         'reasoning': 'Result not found in batch response',
                         'confidence': 0.0,
                         'related_regulations': [],
-                        'original_feature_name': item['feature_name'],
-                        'expanded_feature_name': item['expanded_name']
+                        'input_feature_name': item['feature_name'],
+                        'input_feature_description': item['feature_description'],
+                        'expanded_feature_name': item['expanded_name'],
+                        'expanded_feature_description': item['expanded_description']
                     })
             
             return final_results
@@ -194,8 +199,10 @@ Return ONLY the JSON array with classifications for all features. No additional 
                 'reasoning': f'Batch parsing error: {str(e)}',
                 'confidence': 0.0,
                 'related_regulations': [],
-                'original_feature_name': item['feature_name'],
-                'expanded_feature_name': item['expanded_name']
+                'input_feature_name': item['feature_name'],
+                'input_feature_description': item['feature_description'],
+                'expanded_feature_name': item['expanded_name'],
+                'expanded_feature_description': item['expanded_description']
             } for item in batch_data]
     
 
