@@ -29,7 +29,8 @@ def get_context(user_question, top_k=3):
     print("✅ Retrieved Context Titles:")
     for t in titles:
         print("-", t)
-    view_embeddings_3d(user_question, top_k=top_k)  # visualize top-k
+        
+    #view_embeddings_3d(user_question, top_k=top_k)  # visualize top-k
 
     # Build context text
     context_text = "\n\n".join([
