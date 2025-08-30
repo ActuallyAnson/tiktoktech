@@ -1,10 +1,17 @@
 from __future__ import annotations
+import os
 from pathlib import Path
 from typing import List, Dict, Any
 import argparse
 import json
 import ast
 import pandas as pd
+
+from dotenv import load_dotenv
+import hashlib
+import zipfile
+from datetime import datetime
+from web3 import Web3
 
 IN_ENRICHED_DEFAULT = "outputs/llm_enriched.csv"
 IN_AGENT_DEFAULT = "outputs/agent_results.csv"
@@ -85,6 +92,153 @@ def compute_confidence(agent_rows: pd.DataFrame, final_class: str) -> float:
     # NOT REQUIRED
     return 0.9
 
+def hash(filename, algorithm='sha256') -> str:
+        """Generate a hash for a file."""
+        hash_obj = hashlib.new(algorithm)
+        with open(filename, 'rb') as f:
+            for chunk in iter(lambda: f.read(4096), b""):
+                hash_obj.update(chunk)
+        return hash_obj.hexdigest()
+
+def log_on_chain(hash_value: str) -> str:
+        """
+        Log the hash value on the Ethereum Sepolia Testnet by 
+        sending a self transaction with the hash in the data field
+        Args:
+            hash_value: The hash value to log
+        Return:
+            The transaction ID if successful, empty string otherwise
+        """
+        load_dotenv()
+        api_key = os.environ.get('SEPOLIA_API_KEY', '')
+        provider = os.environ.get('SEPOLIA_API_PROVIDER', '').lower()
+        private_key = os.environ.get('ETH_PRIVATE_KEY', '')
+
+        if api_key == 'your_sepolia_api_key_here' or private_key == 'your_ethereum_private_key_here':
+            api_key = ''
+            private_key = ''
+
+        if (api_key and provider and private_key):
+            match provider:
+                case 'alchemy':
+                    rpc_url = f"https://eth-sepolia.g.alchemy.com/v2/{api_key}"
+                case 'infura':
+                    rpc_url = f"https://sepolia.infura.io/v3/{api_key}"
+                
+            w3 = Web3(Web3.HTTPProvider(rpc_url))
+            if not w3.is_connected():
+                print("Failed to connect to Ethereum network, check your API provider and key.\nSupported providers: alchemy, infura")
+                return ''
+
+            acct = w3.eth.account.from_key(private_key)
+            balance = w3.eth.get_balance(acct.address)
+            balance_eth = w3.from_wei(balance, 'ether')
+
+            data_bytes = len(hash_value) // 2  # Each hex pair = 1 byte
+            gas_for_data = data_bytes * 16  # 16 gas per non-zero byte (assuming worst case)
+            estimated_gas = 21000 + gas_for_data + 1000  # Base + data + buffer
+
+            gas_price = w3.eth.gas_price
+            estimated_cost = w3.from_wei(gas_price * estimated_gas, 'ether')
+            
+            if balance_eth < estimated_cost:
+                print(f"Insufficient funds: {balance_eth} ETH (need ~{estimated_cost} ETH)")
+                return False
+
+            tx = {
+                "to": acct.address,  # Self-send to embed data
+                "value": 0,          
+                "gas": estimated_gas,        
+                "gasPrice": gas_price,
+                "nonce": w3.eth.get_transaction_count(acct.address),
+                "data": "0x" + hash_value  # Embed hash in transaction data
+            }
+
+            try:
+                estimated_gas_web3 = w3.eth.estimate_gas(tx)
+                tx["gas"] = estimated_gas_web3
+                
+                signed = acct.sign_transaction(tx)
+                tx_hash = w3.eth.send_raw_transaction(signed.raw_transaction)
+                tx_hash_str = f"0x{tx_hash.hex()}"
+                print(f"✓ Hash log transaction successful!")
+                return tx_hash_str
+
+            except Exception as e:
+                print(f"Hash log transaction failed: {e}")
+                return ''
+        else:
+            print("Hash log transaction skipped (Missing required environment variables)")
+            return ''
+
+def generate_report(in_enriched: Path, in_agents: Path, in_final: Path):
+    # Get the directory of the output CSV
+    output_dir = in_final.parent
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    zip_filename = f"final_report_{timestamp}.zip"
+    zip_path = output_dir / zip_filename
+    
+    # List of files to look for and include in zip
+    files_to_include = [
+        in_final,  # The final results we just created
+        in_enriched,  # LLM enriched file
+        in_agents,   # Agent results file
+        output_dir / "prescan_results.csv",
+        output_dir / "llm_routed.csv", 
+        output_dir / "agent_queues.json"
+    ]
+    directories_to_include = [
+        output_dir / "by_domain"
+    ]
+
+    try:
+        # Create zip archive with existing files
+        with zipfile.ZipFile(zip_path, 'w') as zipf:
+            
+            for file_path in files_to_include:
+                file_obj = Path(file_path)
+                
+                # Check if file exists (either absolute path or relative to output dir)
+                if file_obj.exists():
+                    zipf.write(file_obj, arcname=file_obj.name)
+                    file_obj.unlink()
+
+            for dir_path in directories_to_include:
+                dir_obj = Path(dir_path)
+                if dir_obj.exists():
+                    for subfile in dir_obj.rglob("*"):
+                        zipf.write(subfile, arcname=subfile.relative_to(dir_obj.parent))
+                        subfile.unlink()
+                    dir_obj.rmdir()
+
+    except Exception as e:
+        print(f"Failed to create report: {e}")
+        return None
+    
+    print(f"✓ Created report: {zip_path}")
+
+    # Create hash file for the zip
+    hash_filename = f"{zip_filename}.txt"
+    hash_path = output_dir / hash_filename
+    hash_value = hash(zip_path)
+    try:
+        with open(hash_path, 'w') as hash_file:
+            hash_file.write(f"Hash: {hash_value}\n")
+            print(f"✓ Created hash file: {hash_path}")
+
+    except Exception as e:
+        print(f"Failed to create hash file: {e}")
+        return None
+    
+    try:
+        tx_id = log_on_chain(hash_value)
+        if tx_id != '':
+            with open(hash_path, 'a') as f:
+                f.write(f"View on Etherscan: https://sepolia.etherscan.io/tx/{tx_id}\n")
+    except Exception as e:
+        print(f"Failed to log transaction on-chain: {e}")
+        return None
+
 # ----------------- main -----------------
 def finalize(in_enriched: str, in_agents: str, out_csv: str):
     enr = pd.read_csv(in_enriched)
@@ -145,7 +299,7 @@ def finalize(in_enriched: str, in_agents: str, out_csv: str):
     out_path = Path(out_csv)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     pd.DataFrame(records).to_csv(out_path, index=False)
-    print(f"✓ Wrote final results → {out_path}  ({len(records)} rows)")
+    generate_report(in_enriched, in_agents, out_path)
 
 if __name__ == "__main__":
     p = argparse.ArgumentParser(description="Produce final, audit-ready results table.")
