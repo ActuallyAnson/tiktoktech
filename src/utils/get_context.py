@@ -4,6 +4,7 @@ import pickle
 import numpy as np
 import faiss
 from sentence_transformers import SentenceTransformer
+from utils.view_embeddings import view_embeddings_3d
 
 # --- Load FAISS index and chunk data ---
 index = faiss.read_index("data/faiss_index_local.bin")
@@ -28,7 +29,7 @@ def get_context(user_question, top_k=3):
     print("✅ Retrieved Context Titles:")
     for t in titles:
         print("-", t)
-
+    view_embeddings_3d(user_question, top_k=top_k)  # visualize top-k
 
     # Build context text
     context_text = "\n\n".join([
@@ -41,6 +42,7 @@ def get_context(user_question, top_k=3):
     {context_text}
 
     '''
+
     return prompt
 
 # --- Example usage ---
