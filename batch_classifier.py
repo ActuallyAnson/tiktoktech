@@ -398,9 +398,6 @@ def main():
     # With 5 features per batch, we reduce API calls from 30 to 6
     batch_classifier = BatchClassifier(delay_seconds=5.0)  # 5 seconds between batches for rate limits
 
-    batch_classifier.log_on_chain('')  # Test logging function (will skip if env vars missing)
-    return
-
     # Check if the real sample data exists
     sample_data_path = 'data/sample_features.csv'
     if Path(sample_data_path).exists():
