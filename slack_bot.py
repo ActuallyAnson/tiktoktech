@@ -295,128 +295,46 @@ def handle_file_upload(event, say, client):
         with open(temp_file_path, 'wb') as f:
             f.write(response.content)
         
-        # Process with batch classifier
-        from batch_classifier import BatchClassifier
-        
-        batch_classifier = BatchClassifier(delay_seconds=5.0)
-        results_df = batch_classifier.process_csv(
-            temp_file_path, 
-            f"outputs/slack_{datetime.now().strftime('%Y%m%d_%H%M%S')}_results.csv",
-            batch_size=5
-        )
-        
-        # Generate summary
-        summary = batch_classifier.generate_summary_report(results_df)
-        
-        # Create summary blocks for Slack
-        total = summary['total_features']
-        breakdown = summary['classification_breakdown']
-        confidence_stats = summary['confidence_statistics']
-        
-        blocks = [
-            {
-                "type": "header",
-                "text": {
-                    "type": "plain_text",
-                    "text": f"🎯 Compliance Classification Results"
-                }
-            },
-            {
-                "type": "section",
-                "text": {
-                    "type": "mrkdwn",
-                    "text": f"*File:* {file_data['name']}\n*Total Features:* {total}"
-                }
-            },
-            {
-                "type": "section",
-                "fields": [
-                    {
-                        "type": "mrkdwn",
-                        "text": f"🔴 *Required:* {breakdown.get('REQUIRED', 0)}"
-                    },
-                    {
-                        "type": "mrkdwn", 
-                        "text": f"✅ *Not Required:* {breakdown.get('NOT REQUIRED', 0)}"
-                    },
-                    {
-                        "type": "mrkdwn",
-                        "text": f"🟡 *Needs Review:* {breakdown.get('NEEDS HUMAN REVIEW', 0)}"
-                    },
-                    {
-                        "type": "mrkdwn",
-                        "text": f"📊 *Avg Confidence:* {confidence_stats['mean_confidence']:.1%}"
-                    }
-                ]
-            }
+        # Run the new pipeline with the uploaded CSV
+        import subprocess
+        pipeline_cmd = [
+            "python3", "src/pipelines/start_pipeline.py",
+            "--input", temp_file_path,
+            "--terms", "data/terminology.json",
+            "--outdir", "outputs"
         ]
-        
-        # Add top required features
-        required_features = results_df[results_df['classification'] == 'REQUIRED'].head(5)
-        if len(required_features) > 0:
-            required_text = "\n".join([
-                f"• {row['input_feature_name'][:50]}..." 
-                for _, row in required_features.iterrows()
-            ])
-            blocks.append({
-                "type": "section",
-                "text": {
-                    "type": "mrkdwn",
-                    "text": f"*🔴 Top Required Features:*\n{required_text}"
-                }
-            })
-        
-        # Send results with text fallback
-        say(
-            text=f"🎯 Compliance Classification Results for {file_data['name']}",
-            blocks=blocks
-        )
-        
-        # Upload detailed results file back to Slack
-        # Use the same timestamp from when we created the output file
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        output_file = f"outputs/slack_{timestamp}_results.csv"
-        
-        # Try to find the actual output file that was created
-        import glob
-        output_files = glob.glob("outputs/slack_*_results.csv")
-        if output_files:
-            # Use the most recent file
-            output_file = max(output_files, key=os.path.getctime)
-        
+        say(f"� Running compliance pipeline on uploaded file...")
+        result = subprocess.run(pipeline_cmd, capture_output=True, text=True)
+        if result.returncode != 0:
+            say(f"❌ Pipeline failed: {result.stderr}")
+            if os.path.exists(temp_file_path):
+                os.remove(temp_file_path)
+            return
+        say(f"✅ Pipeline completed! Uploading results...")
+
+        # Upload the final results CSV
+        output_file = "outputs/final_results.csv"
         if os.path.exists(output_file):
             try:
-                # Get the channel where the file was shared
                 channel_id = file_data.get("channels", [None])[0] if file_data.get("channels") else None
                 if not channel_id:
-                    # Try to get from the file event
                     channel_id = event.get("channel_id")
-                
-                response = client.files_upload_v2(
+                client.files_upload_v2(
                     channel=channel_id,
                     file=output_file,
-                    title=f"Detailed Results - {file_data['name']}",
-                    initial_comment="📋 Here are the detailed classification results!"
+                    title=f"Final Compliance Results - {file_data['name']}",
+                    initial_comment="📋 Here are the final compliance classification results!"
                 )
-                say(f"✅ Detailed results uploaded: {os.path.basename(output_file)}")
+                say(f"✅ Final results uploaded: {os.path.basename(output_file)}")
             except Exception as upload_error:
                 say(f"⚠️ Results processed but file upload failed: {str(upload_error)}")
                 say(f"📁 Results saved locally as: {output_file}")
-                # Try alternative upload method
-                try:
-                    with open(output_file, 'rb') as file_content:
-                        client.files_upload(
-                            channels=file_data.get("channels", [None])[0] if file_data.get("channels") else None,
-                            file=file_content,
-                            filename=os.path.basename(output_file),
-                            title=f"Detailed Results - {file_data['name']}",
-                            initial_comment="📋 Detailed classification results (alternative upload)"
-                        )
-                    say("✅ File uploaded using alternative method!")
-                except Exception as alt_error:
-                    say(f"❌ Both upload methods failed: {str(alt_error)}")
         else:
             say(f"⚠️ Results processed but output file not found: {output_file}")
+
+        # Clean up temp file
+        if os.path.exists(temp_file_path):
+            os.remove(temp_file_path)
         
         # Clean up temp file
         if os.path.exists(temp_file_path):
