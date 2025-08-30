@@ -1,4 +1,3 @@
-# privacy.py
 from __future__ import annotations
 import re
 from .base import BaseAgent, AgentVerdict
@@ -34,7 +33,7 @@ class PrivacyAgent(BaseAgent):
         bumps = [0.25,0.20,0.20,0.15,0.15,0.10,0.15,0.10,0.05]
         for rx, w in zip(PRIVACY_HINTS, bumps):
             if re.search(rx, t, re.I): s += w
-        # Co-occurrence: consent + retention → stronger
+
         if self.cooc(t, r"\bconsent\b", r"\b(retention|deletion|erasure|minimi[sz]ation)\b"): s += 0.15
         return min(s, 1.0)
 

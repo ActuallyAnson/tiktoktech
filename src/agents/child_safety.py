@@ -1,4 +1,3 @@
-# child_safety.py
 from __future__ import annotations
 import re
 from .base import BaseAgent, AgentVerdict
@@ -29,14 +28,12 @@ class ChildSafetyAgent(BaseAgent):
 
     def check(self, row) -> AgentVerdict:
         t = self.text(row)
-        
+
         s = 0.0
         if self.has(CHILD_TERMS, t): s += 0.30
         if self.has(AGE_CTRL, t):    s += 0.30
         if self.cooc(t, CHILD_TERMS, AGE_CTRL): s += 0.20
-        # NEW: “underage/minor” + moderation signals → strong bump
         if self.cooc(t, CHILD_TERMS, MOD_SIGNALS): s += 0.25
-        # maybe also treat explicit “policy framework” as a compliance hint
         if self.cooc(t, CHILD_TERMS, r"\bpolicy\s*(framework)?\b"): s += 0.10
         s = min(s, 1.0)
 
@@ -47,7 +44,6 @@ class ChildSafetyAgent(BaseAgent):
         elif s >= 0.35:
             status, reasoning = "REVIEW", "Partial minors indicators."
 
-        # LLM (always if enabled)
         if self.llm and self.llm_enabled and (self.llm_mode == "always" or status == "REVIEW"):
             obj = self.llm_json(self._prompt(t),
                                 expect_keys=("status","reasoning"))
@@ -63,7 +59,6 @@ class ChildSafetyAgent(BaseAgent):
                 else:
                     reasoning = f"{reasoning} | LLM: {obj.get('reasoning','').strip()}"
 
-                # Calibrate score to LLM verdict (prevents REQUIRED@0)
                 s = {"ISSUE": 0.9, "REVIEW": 0.6, "OK": max(s, 0.5)}[status]
 
         return AgentVerdict(agent=self.name, status=status, score=round(s, 2), reasoning=reasoning)

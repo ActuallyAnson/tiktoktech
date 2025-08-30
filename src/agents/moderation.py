@@ -1,4 +1,3 @@
-# moderation.py
 from __future__ import annotations
 import re
 from .base import BaseAgent, AgentVerdict
@@ -39,7 +38,7 @@ class ModerationAgent(BaseAgent):
         weights = [0.25,0.20,0.15,0.15,0.15,0.10,0.10,0.05]
         for rx, w in zip(MOD_HINTS, weights):
             if re.search(rx, t, re.I): s += w
-        # Co-occurrence bumps: notice+appeal, transparency+reporting
+
         if self.cooc(t, r"\bnotice\b", r"\bappeal"): s += 0.15
         if self.cooc(t, r"\btransparency\b", r"\breport"): s += 0.10
         if self.cooc(t, CHILD_TERMS, r"\bmoderation|moderate|stricter\b"): s += 0.20
