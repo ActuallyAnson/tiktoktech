@@ -172,10 +172,10 @@ def main():
             log_file = paths["logs_dir"] / f"{i:02d}_{label.lower().replace(' ', '_')}.log"
             rc = run(cmd, log_file)
             if rc != 0:
-                print(f"✗ {label} failed (exit {rc}). See log: {log_file}")
+                print(f" {label} failed (exit {rc}). See log: {log_file}")
                 sys.exit(rc)
         dur = time.time() - start_all
-        print(f"\n✓ All done in {dur:.1f}s  Final CSV → {paths['final_csv']}")
+        print(f"\n All done in {dur:.1f}s  Final CSV → {paths['final_csv']}")
         
 
 if __name__ == "__main__":

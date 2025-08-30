@@ -4,7 +4,7 @@ import pickle
 import numpy as np
 import faiss
 from sentence_transformers import SentenceTransformer
-from utils.view_embeddings import view_embeddings_3d
+from src.utils.view_embeddings import view_embeddings_3d
 
 # --- Load FAISS index and chunk data ---
 index = faiss.read_index("data/faiss_index_local.bin")
