@@ -9,7 +9,7 @@
     "Softblock": "A user-level limitation applied silently without notifications",
     "Spanner": "A synthetic name for a rule engine (not to be confused with Google Spanner)",
     "ShadowMode": "Deploy feature in non-user-impact way to collect analytics only",
-    "T5": "Tier 5 sensitivity data; more critical than T1–T4 in this internal taxonomy",
+    "T5": "Tier 5 sensitivity data; more critical than T1-T4 in this internal taxonomy",
     "ASL": "Age-sensitive logic",
     "Glow": "A compliance-flagging status, internally used to indicate geo-based alerts",
     "NSP": "Non-shareable policy (content should not be shared externally)",
