@@ -7,10 +7,17 @@ Training documents for LLM
     Build a prompt for classifying a feature's geo-compliance requirements.
 """
 
-def build_classification_prompt(feature_name: str, feature_description: str) -> str:
+def build_classification_prompt(feature_name: str, feature_description: str,context: str) -> str:
 
     
-    system_instructions = """You are analyzing TikTok features for geo-compliance requirements.
+    system_instructions = """
+    
+System:
+You are an expert assistant. You must answer questions **only using the context provided**. 
+Do not generate information from your training data, prior knowledge, or the internet. 
+If the answer is not in the context, respond with "I don’t know" or "Not enough information in context".
+    
+You are analyzing TikTok features for geo-compliance requirements.
 
 Your task: Determine if a feature requires geo-specific compliance logic.
 
@@ -34,7 +41,8 @@ Key indicators for REQUIRED:
 Key indicators for NOT REQUIRED:
 - Universal features ("all regions", "platform-wide")
 - Business testing ("trial run", "experimentation")
-- No legal context"""
+- No legal context
+"""
 
     few_shot_examples = """
 Examples:
@@ -105,4 +113,4 @@ Provide your response in this exact JSON format:
   "related_regulations": ["list of specific laws/regulations mentioned, if any"]
 }"""
 
-    return system_instructions + few_shot_examples + new_feature + output_format
+    return system_instructions + few_shot_examples + new_feature + output_format + context

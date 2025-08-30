@@ -11,11 +11,14 @@ from google.generativeai.generative_models import GenerativeModel
 from google.generativeai.client import configure
 from .prompt_templates import build_classification_prompt
 from .text_preprocessor import expand_terminology
+from utils.get_context import get_context
 
 class GeminiClassifier:
     #constructor to load api key from .env
     def __init__(self) -> None:
         load_dotenv()
+        
+    
 
         my_api_key = os.getenv("GEMINI_API_KEY")
         
@@ -38,7 +41,20 @@ class GeminiClassifier:
             expanded_name = expand_terminology(feature_name)
             expanded_desc = expand_terminology(feature_description)
 
-            prompt = build_classification_prompt (expanded_name, expanded_desc)
+            context = get_context(expanded_desc)
+            self.context = f"""
+You are an expert assistant. Answer the question **solely based on the context below**. 
+Do NOT use external information, your training data, or any web search. 
+If the answer is not present in the context,give your confident score as 0'.
+
+Context:
+{context}
+
+"""
+            with open("data/context.txt", 'w', encoding='utf-8') as f:
+                json.dump({'context': self.context}, f, ensure_ascii=False, indent=2)
+
+            prompt = build_classification_prompt (expanded_name, expanded_desc,self.context)
 
             response = self.model.generate_content(prompt)
 

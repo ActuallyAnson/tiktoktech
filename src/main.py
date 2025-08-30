@@ -69,6 +69,7 @@ def demo_classifier():
             print(f"   {icon} Classification: {classification}")
             print(f"   🎯 Confidence: {confidence:.2f}")
             print(f"   💭 Reasoning: {reasoning[:80]}...")
+            print(f"=" * 50)
             print()
             
         except Exception as e:
