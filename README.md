@@ -26,22 +26,30 @@ As TikTok operates globally, every product feature must dynamically satisfy doze
 tiktoktech/
 ├── src/
 │   ├── agents/              # Multi-agent system components
-│   ├── models/              # Data models and schemas
+│   ├── config/              # Configuration files
+│   ├── llm/                 # LLM client and related logic
+│   ├── pipelines/           # Processing pipelines
 │   ├── processors/          # Feature analysis processors
-│   ├── regulations/         # Regulation knowledge base
-│   ├── utils/              # Utility functions
-│   └── main.py             # Main application entry point
+│   ├── prompts/             # Prompt templates for LLMs
+│   ├── utils/               # Utility functions
+│   └── main.py              # Main application entry point
 ├── data/
+│   ├── chunk_data_local.pkl # Local chunked data
+│   ├── dataset.jsonl        # Feature dataset (JSONL)
+│   ├── faiss_index_local.bin# FAISS index for embeddings
 │   ├── sample_features.csv  # Sample feature dataset
-│   ├── regulations.json     # Regulation definitions
-│   └── terminology.json    # Internal terminology mapping
+│   ├── terminology.json     # Internal terminology mapping
+│   └── url.json             # URL mapping data
 ├── outputs/
-│   ├── compliance_reports/  # Generated compliance reports
-│   └── audit_trails/       # Audit trail outputs
-├── tests/                  # Unit and integration tests
-├── config/                 # Configuration files
-├── requirements.txt        # Python dependencies
-└── .env.example           # Environment variables template
+│   ├── logs/                # Pipeline logs
+│   └── queues/              # Agent processing queues
+├── app.py                   # Streamlit web interface
+├── executable.bat           # Windows executable script
+├── requirements.txt         # Python dependencies
+├── slack_bot.py             # Slack integration bot
+├── SLACK_SETUP.md           # Slack setup instructions
+├── TEAM_INTEGRATION.md      # Team integration documentation
+└── README.md                # Project documentation
 ```
 
 ## Target Regulations
@@ -54,52 +62,31 @@ tiktoktech/
 
 ## Development Tools & Technologies
 
-- **Language**: Python 3.13+
-- **LLM Framework**: Google Gemini 2.5 Flash
-- **Web Interface**: Streamlit
-- **Data Processing**: Pandas, NumPy
-- **Visualization**: Plotly, Matplotlib, Seaborn
+**Language**: Python 3.11+
+**LLM Framework**: Google Gemini 2.5 Flash
+**Web Interface**: Streamlit
+**Slack Integration**: Slack Bolt SDK
+**Data Processing**: Pandas, NumPy
+**Vector Search**: FAISS (for embedding search)
+**Configuration**: Python-dotenv, custom config files
+**Visualization**: Plotly, Matplotlib, Seaborn
+**Machine Learning**: scikit-learn, sentence-transformers
+**Blockchain/Web3**: web3 (Ethereum Sepolia integration)
+**Utilities**: requests, tqdm, click, rich
+**Testing**: pytest, pytest-asyncio
+**Development**: black, flake8, mypy
 
 
-## Installation & Setup
-
-1. Clone the repository:
-```bash
-git clone https://github.com/ActuallyAnson/tiktoktech.git
-cd tiktoktech
-```
-
-2. Create and activate virtual environment:
-```bash
-python -m venv venv #(or python3 -m venv venv)
-source .venv/bin/activate #linux & Macos 
-# On Windows: venv\Scripts\activate
-```
-
-3. Install dependencies:
 ## Installation & Setup
 
 ### Prerequisites
 
-- Python 3.11+
-- Slack workspace admin access (for Slack integration)
-- Google Gemini API key
+Python 3.11+
+Google Gemini API key
+Slack workspace admin access (for Slack integration, optional)
+Ethereum Sepolia API key and private key (for blockchain features, optional)
 
-### Quick Installation (Recommended)
-
-```bash
-git clone https://github.com/your-username/tiktoktech.git
-cd tiktoktech
-./install.sh
-```
-
-The installation script will:
-- ✅ Check Python version compatibility
-- 📦 Install all dependencies 
-- 📋 Create `.env` file from template
-- 🔍 Verify installation
-
-### Manual Installation
+### Installation
 
 1. **Clone and Install Dependencies**
 
@@ -112,7 +99,9 @@ pip install -r requirements.txt
 2. **Environment Configuration**
 
 ```bash
-cp .env.example .env
+python -m venv venv #(or python3 -m venv venv)
+source .venv/bin/activate #linux & Macos 
+# On Windows: venv\Scripts\activate
 ```
 
 Edit `.env` with your API keys:
@@ -121,15 +110,14 @@ Edit `.env` with your API keys:
 GEMINI_API_KEY=your_gemini_api_key_here
 GEMINI_MODEL=gemini-2.5-flash
 
+# Ethereum Sepolia Testnet Configuration (Optional)
+SEPOLIA_API_PROVIDER=infura
+SEPOLIA_API_KEY=your_sepolia_api_key_here
+ETH_PRIVATE_KEY=your_ethereum_private_key_here
+
 # Slack Bot Configuration (Optional - for team integration)
 SLACK_BOT_TOKEN=xoxb-your-bot-token-here
 SLACK_APP_TOKEN=xapp-your-app-token-here
-```
-
-3. **Verify Installation**
-
-```bash
-python3 verify_installation.py
 ```
 
 ### Slack Integration Setup (Optional)
@@ -145,60 +133,47 @@ For team collaboration via Slack:
    - Install to workspace
    - Copy tokens to `.env`
 
-### Installation Verification
-
-Run the verification script to ensure everything is working:
-
-```bash
-python3 verify_installation.py
-```
-
-This will check:
-- ✅ Python version compatibility
-- 📦 Required dependencies
-- 🔐 Environment variables
-- 📁 Data files
-- 🧪 Basic functionality
-
 ## Usage
 
-### Method 1: Batch Processing (Command Line)
+### Method 1: Command Line
 
 ```bash
-python3 batch_classifier.py
+python -m src.pipelines.start_pipeline --only-llm --llm-for-llm-categorized
 ```
 
 ### Method 2: Slack Integration (Team Collaboration)
 
 1. **Start the bot**:
    ```bash
-   python3 slack_bot.py
+   python slack_bot.py
    ```
 
-2. **Upload CSV files**: Drag and drop CSV files into any Slack channel where the bot is present
+2. **Upload CSV files**: 
+   Drag and drop CSV files into any Slack channel where the bot is present
 
-3. **Use slash commands**:
+### Method 3: Streamlit
+
+1. **Start Streamlit**:
+   ```bash
+   python -m streamlit run app.py
    ```
-   /classify Feature name | Feature description
-   /compliance-help
-   ```
 
-### Method 3: Single Feature Classification
+2. **Upload CSV files**: 
+   Drag and drop CSV files into the upload widget
 
-```bash
-python3 -c "
-from src.processors.gemini_classifier import GeminiClassifier
-classifier = GeminiClassifier()
-result = classifier.classify_feature('Age verification', 'Enhanced age verification for COPPA compliance')
-print(result)
-"
-```
-
-
+3. **Press "Start Compliance Pipeline"**: 
+   You can view the pipeline output and status directly in Streamlit
 
 ## Expected Outputs
 
+All outputs are saved in the `outputs/` directory:
 
+- `logs/`: Detailed logs for each pipeline stage and agent
+- `queues/`: CSV files showing feature assignments and agent processing queues
+- `final_report.zip`: Archive containing compliance results and reports from all agents
+`final_report.hash`: Hash file containing the cryptographic hash of `final_report.zip` and (if blockchain API key is provided) the Ethereum transaction ID verifying the hash
+
+These outputs provide traceability, auditability, and optional blockchain verification for compliance results.
 
 ## Internal Terminology Support
 
@@ -214,30 +189,9 @@ The system understands TikTok's internal terminology:
 | T5 | Tier 5 sensitivity data |
 | ... | (Complete mapping in data/terminology.json) |
 
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## Testing
-
-Run the test suite:
-```bash
-pytest tests/
-```
-
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Workshop Information
-
-**Workshop**: From Guesswork to Governance: Automating Geo-Regulation with LLM  
-**Date**: August 27, 2025  
-**Time**: 2:30-3:00 PM  
 
 ## Contact
 
