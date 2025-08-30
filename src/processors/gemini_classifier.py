@@ -11,7 +11,7 @@ from google.generativeai.generative_models import GenerativeModel
 from google.generativeai.client import configure
 from .prompt_templates import build_classification_prompt
 from .text_preprocessor import expand_terminology
-from utils.get_context import get_context
+from src.utils.get_context import get_context
 
 class GeminiClassifier:
     #constructor to load api key from .env
