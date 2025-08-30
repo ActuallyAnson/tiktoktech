@@ -312,10 +312,83 @@ def handle_file_upload(event, say, client):
             return
         say(f"✅ Pipeline completed! Uploading results...")
 
-        # Upload the final results CSV
+        # Read and display summary of final results CSV
         output_file = "outputs/final_results.csv"
         if os.path.exists(output_file):
             try:
+                # Read the results and generate summary
+                results_df = pd.read_csv(output_file)
+                total_features = len(results_df)
+                
+                # Count classifications
+                required_count = len(results_df[results_df['classification'] == 'REQUIRED'])
+                not_required_count = len(results_df[results_df['classification'] == 'NOT REQUIRED']) 
+                needs_review_count = len(results_df[results_df['classification'] == 'NEEDS HUMAN REVIEW'])
+                
+                # Calculate average confidence
+                avg_confidence = results_df['confidence'].mean() if 'confidence' in results_df.columns else 0
+                
+                # Create summary blocks for Slack
+                blocks = [
+                    {
+                        "type": "header",
+                        "text": {
+                            "type": "plain_text",
+                            "text": f"🎯 Compliance Classification Results"
+                        }
+                    },
+                    {
+                        "type": "section",
+                        "text": {
+                            "type": "mrkdwn",
+                            "text": f"*File:* {file_data['name']}\n*Total Features:* {total_features}"
+                        }
+                    },
+                    {
+                        "type": "section",
+                        "fields": [
+                            {
+                                "type": "mrkdwn",
+                                "text": f"🔴 *Required:* {required_count}"
+                            },
+                            {
+                                "type": "mrkdwn", 
+                                "text": f"✅ *Not Required:* {not_required_count}"
+                            },
+                            {
+                                "type": "mrkdwn",
+                                "text": f"🟡 *Needs Review:* {needs_review_count}"
+                            },
+                            {
+                                "type": "mrkdwn",
+                                "text": f"📊 *Avg Confidence:* {avg_confidence:.1%}"
+                            }
+                        ]
+                    }
+                ]
+                
+                # Add top required features if any
+                required_features = results_df[results_df['classification'] == 'REQUIRED'].head(5)
+                if len(required_features) > 0:
+                    required_text = "\n".join([
+                        f"• {row['feature_name'][:50]}..." 
+                        for _, row in required_features.iterrows()
+                    ])
+                    blocks.append({
+                        "type": "section",
+                        "text": {
+                            "type": "mrkdwn",
+                            "text": f"*🔴 Top Required Features:*\n{required_text}"
+                        }
+                    })
+                
+                # Send summary
+                say(
+                    text=f"🎯 Compliance Classification Results for {file_data['name']}",
+                    blocks=blocks
+                )
+                
+                # Upload the CSV file
                 channel_id = file_data.get("channels", [None])[0] if file_data.get("channels") else None
                 if not channel_id:
                     channel_id = event.get("channel_id")
@@ -323,9 +396,10 @@ def handle_file_upload(event, say, client):
                     channel=channel_id,
                     file=output_file,
                     title=f"Final Compliance Results - {file_data['name']}",
-                    initial_comment="📋 Here are the final compliance classification results!"
+                    initial_comment="📋 Here are the detailed compliance classification results!"
                 )
                 say(f"✅ Final results uploaded: {os.path.basename(output_file)}")
+                
             except Exception as upload_error:
                 say(f"⚠️ Results processed but file upload failed: {str(upload_error)}")
                 say(f"📁 Results saved locally as: {output_file}")
