@@ -164,7 +164,7 @@ def main():
                     sys.exit(rc)
                 progress.advance(task)
         dur = time.time() - start_all
-        console.print(f"[green]✓ All done in {dur:.1f}s[/]  Final CSV → [bold]{paths['final_csv']}[/]")
+        console.print(f"[green]✓ All done in {dur:.1f}s[/]")
     else:
         print("== Compliance Pipeline ==")
         for i, (label, cmd) in enumerate(cmds, 1):
@@ -175,7 +175,7 @@ def main():
                 print(f" {label} failed (exit {rc}). See log: {log_file}")
                 sys.exit(rc)
         dur = time.time() - start_all
-        print(f"\n All done in {dur:.1f}s  Final CSV → {paths['final_csv']}")
+        print(f"\n All done in {dur:.1f}s")
         
 
 if __name__ == "__main__":

@@ -218,7 +218,7 @@ def generate_report(in_enriched: Path, in_agents: Path, in_final: Path):
     print(f"✓ Created report: {zip_path}")
 
     # Create hash file for the zip
-    hash_filename = f"{zip_filename}.txt"
+    hash_filename = f"{zip_filename}.hash"
     hash_path = output_dir / hash_filename
     hash_value = hash(zip_path)
     try:
