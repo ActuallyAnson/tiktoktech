@@ -297,8 +297,12 @@ def handle_file_upload(event, say, client):
         
         # Run the new pipeline with the uploaded CSV
         import subprocess
+        import sys
+        
+        # Use the same Python executable that's running this script
+        python_cmd = sys.executable
         pipeline_cmd = [
-            "python3", "src/pipelines/start_pipeline.py",
+            python_cmd, "src/pipelines/start_pipeline.py",
             "--input", temp_file_path,
             "--terms", "data/terminology.json",
             "--outdir", "outputs"
@@ -312,99 +316,33 @@ def handle_file_upload(event, say, client):
             return
         say(f"✅ Pipeline completed! Uploading results...")
 
-        # Read and display summary of final results CSV
-        output_file = "outputs/final_results.csv"
-        if os.path.exists(output_file):
-            try:
-                # Read the results and generate summary
-                results_df = pd.read_csv(output_file)
-                total_features = len(results_df)
-                
-                # Count classifications
-                required_count = len(results_df[results_df['classification'] == 'REQUIRED'])
-                not_required_count = len(results_df[results_df['classification'] == 'NOT REQUIRED']) 
-                needs_review_count = len(results_df[results_df['classification'] == 'NEEDS HUMAN REVIEW'])
-                
-                # Calculate average confidence
-                avg_confidence = results_df['confidence'].mean() if 'confidence' in results_df.columns else 0
-                
-                # Create summary blocks for Slack
-                blocks = [
-                    {
-                        "type": "header",
-                        "text": {
-                            "type": "plain_text",
-                            "text": f"🎯 Compliance Classification Results"
-                        }
-                    },
-                    {
-                        "type": "section",
-                        "text": {
-                            "type": "mrkdwn",
-                            "text": f"*File:* {file_data['name']}\n*Total Features:* {total_features}"
-                        }
-                    },
-                    {
-                        "type": "section",
-                        "fields": [
-                            {
-                                "type": "mrkdwn",
-                                "text": f"🔴 *Required:* {required_count}"
-                            },
-                            {
-                                "type": "mrkdwn", 
-                                "text": f"✅ *Not Required:* {not_required_count}"
-                            },
-                            {
-                                "type": "mrkdwn",
-                                "text": f"🟡 *Needs Review:* {needs_review_count}"
-                            },
-                            {
-                                "type": "mrkdwn",
-                                "text": f"📊 *Avg Confidence:* {avg_confidence:.1%}"
-                            }
-                        ]
-                    }
-                ]
-                
-                # Add top required features if any
-                required_features = results_df[results_df['classification'] == 'REQUIRED'].head(5)
-                if len(required_features) > 0:
-                    required_text = "\n".join([
-                        f"• {row['feature_name'][:50]}..." 
-                        for _, row in required_features.iterrows()
-                    ])
-                    blocks.append({
-                        "type": "section",
-                        "text": {
-                            "type": "mrkdwn",
-                            "text": f"*🔴 Top Required Features:*\n{required_text}"
-                        }
-                    })
-                
-                # Send summary
-                say(
-                    text=f"🎯 Compliance Classification Results for {file_data['name']}",
-                    blocks=blocks
-                )
-                
-                # Upload the CSV file
-                channel_id = file_data.get("channels", [None])[0] if file_data.get("channels") else None
-                if not channel_id:
-                    channel_id = event.get("channel_id")
-                client.files_upload_v2(
-                    channel=channel_id,
-                    file=output_file,
-                    title=f"Final Compliance Results - {file_data['name']}",
-                    initial_comment="📋 Here are the detailed compliance classification results!"
-                )
-                say(f"✅ Final results uploaded: {os.path.basename(output_file)}")
-                
-            except Exception as upload_error:
-                say(f"⚠️ Results processed but file upload failed: {str(upload_error)}")
-                say(f"📁 Results saved locally as: {output_file}")
+        # Look for the generated ZIP file (follows pattern: final_report_YYYYMMDD_HHMMSS.zip)
+        import glob
+        zip_pattern = "outputs/final_report_*.zip"
+        zip_files = glob.glob(zip_pattern)
+        
+        if zip_files:
+            # Get the most recent ZIP file
+            latest_zip = max(zip_files, key=os.path.getctime)
+            
+            # Upload the ZIP file
+            channel_id = file_data.get("channels", [None])[0] if file_data.get("channels") else None
+            if not channel_id:
+                channel_id = event.get("channel_id")
+            
+            client.files_upload_v2(
+                channel=channel_id,
+                file=latest_zip,
+                title=f"Complete Compliance Report - {file_data['name']}",
+                initial_comment="📦 Here's the complete compliance analysis report with all processing details!"
+            )
+            say(f"✅ Complete report uploaded: {os.path.basename(latest_zip)}")
+            
+            # Try to show summary from ZIP contents, but don't require it
+            say(f"📦 ZIP file contains all processing results and final classifications")
         else:
-            say(f"⚠️ Results processed but output file not found: {output_file}")
+            say(f"❌ ZIP file not found - pipeline may have failed")
+            return
 
         # Clean up temp file
         if os.path.exists(temp_file_path):
@@ -445,9 +383,9 @@ def help_command(ack, respond):
   - `feature_name` (name of the feature)
   - `feature_description` (what it does)
 • The bot will automatically process it and return:
-  - Summary statistics
-  - Detailed results file
-  - Top required features
+  - Complete compliance analysis package (ZIP file)
+  - Summary statistics in chat
+  - All processing details and audit trail
 
 *Example CSV format:*
 ```
