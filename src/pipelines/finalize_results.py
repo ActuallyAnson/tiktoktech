@@ -299,7 +299,9 @@ def finalize(in_enriched: str, in_agents: str, out_csv: str):
     out_path = Path(out_csv)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     pd.DataFrame(records).to_csv(out_path, index=False)
+    print(f"✓ Wrote final results: {out_path}")
     generate_report(in_enriched, in_agents, out_path)
+    print("✓ Done.")
 
 if __name__ == "__main__":
     p = argparse.ArgumentParser(description="Produce final, audit-ready results table.")

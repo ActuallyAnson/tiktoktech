@@ -59,5 +59,6 @@ def view_embeddings_3d(query=None, top_k=3):
 
     fig.update_traces(marker=dict(size=5), textposition="top center")
     fig.show()
-
-view_embeddings_3d()  # View all
+    
+if __name__ == "__main__":
+    view_embeddings_3d()  # View all
