@@ -35,8 +35,13 @@ def get_context(user_question, top_k=3):
         f"Title: {c['title']}\nSummary: {c['summary']}\nContent: {c['content']}"
         for c in retrieved_chunks
     ])
-    
-    return context_text
+    prompt = f'''
+    Use the following context to answer the question.
+    Context:
+    {context_text}
+
+    '''
+    return prompt
 
 # --- Example usage ---
 if __name__ == "__main__":

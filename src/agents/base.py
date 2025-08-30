@@ -3,6 +3,7 @@ from typing import Dict, Any, Optional
 import re
 import json, re, time
 from typing import Iterable, Optional, Dict, Any, List, Tuple
+from src.utils.get_context import get_context
 
 @dataclass
 class AgentVerdict:
@@ -65,8 +66,10 @@ class BaseAgent:
             return None
 
         ask = prompt
+        context = get_context(ask)  # ensure context is loaded
+
         for _ in range(retries + 1):
-            raw = self.llm.generate(ask)
+            raw = self.llm.generate(context+ask)
             obj = _parse(raw)
             if obj and all(k in obj for k in expect_keys):
                 return obj
