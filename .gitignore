@@ -81,3 +81,5 @@ outputs/*.json
 !outputs/.gitkeep
 .streamlit/
 temp/
+outputs/
+!outputs/.gitkeep
