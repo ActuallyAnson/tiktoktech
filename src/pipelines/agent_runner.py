@@ -172,7 +172,7 @@ def main(in_csv: str | Path,
     out_path = Path(out_csv)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     pd.DataFrame(rows_out).to_csv(out_path, index=False)
-    print(f"✓ Wrote agent results → {out_path}")
+    print(f"Wrote agent results → {out_path}")
 
 if __name__ == "__main__":
     import argparse

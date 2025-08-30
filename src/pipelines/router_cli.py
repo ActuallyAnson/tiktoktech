@@ -61,7 +61,7 @@ def main():
 
     out_csv.parent.mkdir(parents=True, exist_ok=True)
     df_routed.to_csv(out_csv, index=False)
-    print(f"✓ Wrote routed CSV → {out_csv}")
+    print(f"Wrote routed CSV → {out_csv}")
 
     queues = build_agent_queues(df_routed)
 
@@ -70,7 +70,7 @@ def main():
         qpath.parent.mkdir(parents=True, exist_ok=True)
         with open(qpath, "w", encoding="utf-8") as f:
             json.dump(queues, f, ensure_ascii=False, indent=2)
-        print(f"✓ Wrote agent queues JSON → {qpath}")
+        print(f"Wrote agent queues JSON → {qpath}")
 
     if args.split_dir:
         split_dir = Path(args.split_dir)
@@ -79,7 +79,7 @@ def main():
             safe = "".join(ch if ch.isalnum() or ch in (" ", "_", "-") else "_" for ch in agent).strip().replace(" ", "_")
             df_agent = df_routed.loc[idxs].copy()
             df_agent.to_csv(split_dir / f"{safe}.csv", index=False)
-        print(f"✓ Wrote per-agent CSVs → {split_dir}")
+        print(f"Wrote per-agent CSVs → {split_dir}")
 
 if __name__ == "__main__":
     main()

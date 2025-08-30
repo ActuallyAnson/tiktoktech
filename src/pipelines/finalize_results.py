@@ -161,7 +161,7 @@ def log_on_chain(hash_value: str) -> str:
                 signed = acct.sign_transaction(tx)
                 tx_hash = w3.eth.send_raw_transaction(signed.raw_transaction)
                 tx_hash_str = f"0x{tx_hash.hex()}"
-                print(f"✓ Hash log transaction successful!")
+                print(f"Hash log transaction successful!")
                 return tx_hash_str
 
             except Exception as e:
@@ -215,7 +215,7 @@ def generate_report(in_enriched: Path, in_agents: Path, in_final: Path):
         print(f"Failed to create report: {e}")
         return None
     
-    print(f"✓ Created report: {zip_path}")
+    print(f"Created report: {zip_path}")
 
     # Create hash file for the zip
     hash_filename = f"{zip_filename}.hash"
@@ -224,7 +224,7 @@ def generate_report(in_enriched: Path, in_agents: Path, in_final: Path):
     try:
         with open(hash_path, 'w') as hash_file:
             hash_file.write(f"Hash: {hash_value}\n")
-            print(f"✓ Created hash file: {hash_path}")
+            print(f"Created hash file: {hash_path}")
 
     except Exception as e:
         print(f"Failed to create hash file: {e}")
@@ -299,9 +299,7 @@ def finalize(in_enriched: str, in_agents: str, out_csv: str):
     out_path = Path(out_csv)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     pd.DataFrame(records).to_csv(out_path, index=False)
-    print(f"✓ Wrote final results: {out_path}")
     generate_report(in_enriched, in_agents, out_path)
-    print("✓ Done.")
 
 if __name__ == "__main__":
     p = argparse.ArgumentParser(description="Produce final, audit-ready results table.")
