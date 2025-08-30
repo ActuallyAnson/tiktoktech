@@ -5,9 +5,10 @@ from sentence_transformers import SentenceTransformer
 from sklearn.decomposition import PCA
 import plotly.express as px
 import plotly.io as pio
+embed_model = SentenceTransformer('all-MiniLM-L6-v2')
 
 def view_embeddings_3d(query=None, top_k=3):
-    embed_model = SentenceTransformer('all-MiniLM-L6-v2')
+    
     pio.renderers.default = "browser"
 
     # --- Load FAISS index and chunk metadata ---
